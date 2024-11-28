@@ -1,0 +1,66 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+def main():
+    try:
+       
+        driver = webdriver.Chrome(executable_path='path_to_chromedriver')
+        driver.maximize_window()
+
+        
+        driver.get("https://fitpeo.com")  # Replace with actual URL
+
+       
+        revenue_calculator_link = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.LINK_TEXT, "Revenue Calculator"))  
+        )
+        revenue_calculator_link.click()
+
+     
+        slider_section = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "slider-section"))  
+        )
+        driver.execute_script("arguments[0].scrollIntoView(true);", slider_section)
+
+        
+        slider = driver.find_element(By.ID, "revenue-slider")  
+        actions = ActionChains(driver)
+        actions.drag_and_drop_by_offset(slider, 100, 0).perform()  
+
+      
+        slider_value_field = driver.find_element(By.ID, "slider-value")  
+        assert slider_value_field.get_attribute("value") == "820"
+
+      
+        slider_value_field.clear()
+        slider_value_field.send_keys("560")
+
+        assert slider.get_attribute("value") == "560"
+
+        
+        cpt_codes = ["CPT-99091", "CPT-99453", "CPT-99454", "CPT-99474"]
+        for code in cpt_codes:
+            checkbox = driver.find_element(By.ID, code)  
+            if not checkbox.is_selected():
+                checkbox.click()
+
+     
+        reimbursement_header = driver.find_element(By.ID, "total-reimbursement-header")  
+        assert reimbursement_header.text == "Total Recurring Reimbursement for all Patients Per Month: $110700"
+
+        print("All test cases passed successfully.")
+
+    except TimeoutException:
+        print("An element could not be located in time.")
+    except AssertionError as e:
+        print(f"Validation failed: {e}")
+    finally:
+        # Close the browser
+        driver.quit()
+
+if __name__ == "__main__":
+    main()
